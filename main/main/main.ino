@@ -1,6 +1,8 @@
 // Temperaturmessung und Übertragung durch MQTT 
 // Stefan Eggert
-const char* this_version = "1.1.5";
+// Das Toppic wird dynamisch mit der MAC erstellt. Hierdurch sind OTA Updates möglich
+
+const char* this_version = "1.1.6";
 
 #include <OneWire.h>                        //OneWire Bibliothek einbinden
 #include <DallasTemperature.h>              //DallasTemperatureBibliothek einbinden
@@ -20,13 +22,17 @@ unsigned int reboots = 0;
 const char* clientId = "";     //Client ID
 const char* mqttstringshort = "/esp/temp/"; // Toppic: 
 
-// Uncomment and replace with your credentials
-// const char* mqtt_server = "192.168.1.1";
-// const int mqtt_port = 1883;
-// const char* mqtt_user = "YOUR_USER";
-// const char* mqtt_password = "YOUR_PASSWORD";
-// const char* ssid = "YOUR_WLAN-SSID";
-// const char* password = "YOUR_WLAN-PASSWORD";
+/*
+// Uncomment this Block for your own settings
+const char* mqtt_server = "192.168.1.1";
+const int mqtt_port = 1883;
+const char* mqtt_user = "YOUR_USER";
+const char* mqtt_password = "YOUR_PASSWORD";
+const char* ssid = "YOUR_WLAN-SSID";
+const char* password = "YOUR_WLAN-PASSWORD";
+*/
+
+
 
 // Sensor
 
@@ -53,9 +59,12 @@ delay(10000); // 10k damit die Verbindung vollständig aufgebaut ist bevor ein R
 }
 
 // Starte Boot Counter
-OTADRIVE.setInfo(ota_api, "v@1.1.5");
-
 boot_count();
+
+//Setup OTA Update
+OTADRIVE.setInfo(ota_api, "v@1.1.6");
+
+
 
 
 
@@ -73,8 +82,7 @@ delay(2000);
 
 void loop(void) { 
 
- //ota();
-  
+ 
  sensors.requestTemperatures();             // Temperaturen Anfragen 
  Serial.print("Temperatur: "); 
  Serial.print(sensors.getTempCByIndex(0));  // "byIndex(0)" spricht den ersten Sensor an  
@@ -144,13 +152,13 @@ ESP.rtcUserMemoryRead(0, &marker, sizeof(marker));
 
   Serial.printf("Number of reboots : %d\r\n", reboots);
 
-  if (reboots > 3) {
-    Serial.println("Welcome, 2nd visior =)");
+  if (reboots > 3) { // Update Anfrage nach X Reboot
     unsigned int marker = 0;
     unsigned int reboots = 0;
      
-     ESP.rtcUserMemoryWrite(sizeof(marker), &reboots, sizeof(reboots));
-     ota();
+    ESP.rtcUserMemoryWrite(sizeof(marker), &reboots, sizeof(reboots)); // Set Counter to NULL
+    
+     ota(); // Starte Update
      
   }
 
@@ -159,7 +167,7 @@ ESP.rtcUserMemoryRead(0, &marker, sizeof(marker));
 
 void ota()
 {
-  Serial.printf("Prüfe Updates");
+  Serial.printf("Prüfe auf Updates");
   if(OTADRIVE.timeTick(30))
   {
     OTADRIVE.updateFirmware();
