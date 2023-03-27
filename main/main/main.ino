@@ -2,7 +2,7 @@
 // Stefan Eggert
 // Das Toppic wird dynamisch mit der MAC erstellt. Hierdurch sind OTA Updates möglich
 
-const char* this_version = "1.1.6";
+const char* this_version = "1.1.10";
 
 #include <OneWire.h>                        //OneWire Bibliothek einbinden
 #include <DallasTemperature.h>              //DallasTemperatureBibliothek einbinden
@@ -58,17 +58,13 @@ delay(10000); // 10k damit die Verbindung vollständig aufgebaut ist bevor ein R
 
 }
 
+//Setup OTA Update
+OTADRIVE.setInfo(ota_api, "v@1.1.10");
+
 // Starte Boot Counter
 boot_count();
 
-//Setup OTA Update
-OTADRIVE.setInfo(ota_api, "v@1.1.6");
-
-
-
-
-
-delay(2000);
+delay(1000);
 
   Serial.println("");
   Serial.println("WiFi verbunden");
@@ -82,7 +78,8 @@ delay(2000);
 
 void loop(void) { 
 
- 
+
+
  sensors.requestTemperatures();             // Temperaturen Anfragen 
  Serial.print("Temperatur: "); 
  Serial.print(sensors.getTempCByIndex(0));  // "byIndex(0)" spricht den ersten Sensor an  
@@ -152,14 +149,14 @@ ESP.rtcUserMemoryRead(0, &marker, sizeof(marker));
 
   Serial.printf("Number of reboots : %d\r\n", reboots);
 
-  if (reboots > 3) { // Update Anfrage nach X Reboot
+  if (reboots > 1) { // Update Anfrage nach X Reboot
     unsigned int marker = 0;
     unsigned int reboots = 0;
      
     ESP.rtcUserMemoryWrite(sizeof(marker), &reboots, sizeof(reboots)); // Set Counter to NULL
     
      ota(); // Starte Update
-     
+   
   }
 
 
@@ -167,11 +164,10 @@ ESP.rtcUserMemoryRead(0, &marker, sizeof(marker));
 
 void ota()
 {
-  Serial.printf("Prüfe auf Updates");
-  if(OTADRIVE.timeTick(30))
-  {
+  Serial.printf("Prüfe auf Updates...");
+  
     OTADRIVE.updateFirmware();
-  }
+    
 }
 
 
